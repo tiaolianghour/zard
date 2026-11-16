@@ -65,13 +65,16 @@
     localStorage.getItem(STORAGE_SCORE) || 0
   );
 
-  function convtag(lastTag){
-    if(lastTag == "ApznPPz8k61"){
+  function convtag(value) {
+    if (value === "ApznPPz8k61" || value === "1") {
       return "1";
     }
-    else if(lastTag == "KQTAnjDYLP2"){
+  
+    if (value === "KQTAnjDYLP2" || value === "2") {
       return "2";
     }
+  
+    return null;
   }
 
   let lastTag = convtag(localStorage.getItem(STORAGE_LAST));
