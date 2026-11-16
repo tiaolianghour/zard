@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -13,7 +12,6 @@
       background: #f5f5f5;
       color: #222;
     }
-
     .game {
       max-width: 420px;
       margin: auto;
@@ -22,22 +20,25 @@
       border-radius: 20px;
       box-shadow: 0 4px 20px #0001;
     }
-
     .score {
       font-size: 80px;
       font-weight: bold;
       margin: 30px 0 10px;
     }
-
     .message {
       font-size: 18px;
       min-height: 2em;
     }
+    .clear {
+      font-size: 24px;
+      font-weight: bold;
+      line-height: 1.8;
+      white-space: pre-line;
+    }
   </style>
 </head>
 <body>
-
-<div class="game">
+<div class="game" id="game">
   <h1>ZARD</h1>
   <div class="score" id="score">0</div>
   <p class="message" id="message">
@@ -49,15 +50,22 @@
 <script>
   const STORAGE_SCORE = "nfc_score";
   const STORAGE_LAST = "nfc_last_tag";
+  const CLEAR_SCORE = 127;
 
   function render() {
-    const score = Number(
-      localStorage.getItem(STORAGE_SCORE) || 0
-    );
+    const score = Number(localStorage.getItem(STORAGE_SCORE) || 0);
     const lastTag = localStorage.getItem(STORAGE_LAST);
 
-    document.getElementById("score").textContent = score;
+    if (score >= CLEAR_SCORE) {
+      document.getElementById("game").innerHTML = `
+        <h1>ZARD</h1>
+        <p class="clear">最後まで走り抜けた！
+スタッフにこの画面を見せよう</p>
+      `;
+      return;
+    }
 
+    document.getElementById("score").textContent = score;
     document.getElementById("lastTag").textContent =
       lastTag === "1" || lastTag === "2"
         ? "前回のタッチ：タグ " + lastTag
@@ -68,9 +76,12 @@
     if (tag !== "1" && tag !== "2") return;
 
     const lastTag = localStorage.getItem(STORAGE_LAST);
-    let score = Number(
-      localStorage.getItem(STORAGE_SCORE) || 0
-    );
+    let score = Number(localStorage.getItem(STORAGE_SCORE) || 0);
+
+    if (score >= CLEAR_SCORE) {
+      render();
+      return;
+    }
 
     if (lastTag === tag) {
       document.getElementById("message").textContent =
@@ -79,15 +90,16 @@
       return;
     }
 
-    // 初回も含めて1点加算
     score++;
-
     localStorage.setItem(STORAGE_SCORE, String(score));
     localStorage.setItem(STORAGE_LAST, tag);
 
-    document.getElementById("message").textContent =
-      "成功！ +1 点";
+    if (score >= CLEAR_SCORE) {
+      render();
+      return;
+    }
 
+    document.getElementById("message").textContent = "成功！ +1 点";
     render();
   }
 
@@ -98,12 +110,7 @@
     if (rawTag === null) return;
 
     url.searchParams.delete("tag");
-
-    history.replaceState(
-      null,
-      "",
-      url.pathname + url.search + url.hash
-    );
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
 
     const tags = {
       "ApznPPz8k61": "1",
@@ -111,15 +118,11 @@
     };
 
     const tag = tags[rawTag];
-
-    if (tag) {
-      processTouch(tag);
-    }
+    if (tag) processTouch(tag);
   }
 
   render();
   handleNFC();
 </script>
-
 </body>
 </html>
