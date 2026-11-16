@@ -33,94 +33,60 @@
       font-size: 18px;
       min-height: 2em;
     }
-
-    .debug {
-      margin-top: 20px;
-      color: #888;
-      font-size: 12px;
-      overflow-wrap: anywhere;
-    }
   </style>
 </head>
 <body>
 
 <div class="game">
   <h1>ZARD</h1>
-
   <div class="score" id="score">0</div>
-
   <p class="message" id="message">
     タグ1とタグ2を交互にタッチしよう！
   </p>
-
   <p id="lastTag"></p>
-  <p class="debug" id="debug"></p>
 </div>
 
 <script>
   const STORAGE_SCORE = "nfc_score";
   const STORAGE_LAST = "nfc_last_tag";
 
-  // タグの固有コードを数字に変換
-  function convtag(value) {
-    if (value === "ApznPPz8k61") return "1";
-    if (value === "KQTAnjDYLP2") return "2";
-    return null;
-  }
-
-  let score = Number(
-    localStorage.getItem(STORAGE_SCORE) || 0
-  );
-
-  // 保存データも必ず数字に統一
-  let lastTag = localStorage.getItem(STORAGE_LAST);
-
-  if (lastTag !== "1" && lastTag !== "2") {
-    lastTag = null;
-  }
-
   function render() {
+    const score = Number(
+      localStorage.getItem(STORAGE_SCORE) || 0
+    );
+    const lastTag = localStorage.getItem(STORAGE_LAST);
+
     document.getElementById("score").textContent = score;
 
     document.getElementById("lastTag").textContent =
-      lastTag === null
-        ? "開始前"
-        : "前回のタッチ：タグ " + lastTag;
-
-    document.getElementById("debug").textContent =
-      "保存値: " + localStorage.getItem(STORAGE_LAST);
-  }
-
-  function showMessage(message) {
-    document.getElementById("message").textContent = message;
+      lastTag === "1" || lastTag === "2"
+        ? "前回のタッチ：タグ " + lastTag
+        : "";
   }
 
   function processTouch(tag) {
-    // 不正な値は受け付けない
     if (tag !== "1" && tag !== "2") return;
 
-    // 初回
-    if (lastTag === null) {
-      lastTag = tag;
-      showMessage("タグ" + tag + "からスタート！");
-    }
-    // 同じタグ
-    else if (lastTag === tag) {
-      showMessage(
-        "同じタグです！反対側にタッチしてください。"
-      );
+    const lastTag = localStorage.getItem(STORAGE_LAST);
+    let score = Number(
+      localStorage.getItem(STORAGE_SCORE) || 0
+    );
+
+    if (lastTag === tag) {
+      document.getElementById("message").textContent =
+        "同じタグです。反対側にタッチしてください！";
       render();
       return;
     }
-    // 交互タッチ
-    else {
-      score++;
-      lastTag = tag;
-      showMessage("成功！ +1 点");
-    }
+
+    // 初回も含めて1点加算
+    score++;
 
     localStorage.setItem(STORAGE_SCORE, String(score));
-    localStorage.setItem(STORAGE_LAST, lastTag);
+    localStorage.setItem(STORAGE_LAST, tag);
+
+    document.getElementById("message").textContent =
+      "成功！ +1 点";
 
     render();
   }
@@ -131,7 +97,6 @@
 
     if (rawTag === null) return;
 
-    // タグ情報を先にURLから削除
     url.searchParams.delete("tag");
 
     history.replaceState(
@@ -140,14 +105,16 @@
       url.pathname + url.search + url.hash
     );
 
-    const tag = convtag(rawTag);
+    const tags = {
+      "ApznPPz8k61": "1",
+      "KQTAnjDYLP2": "2"
+    };
 
-    if (tag === null) {
-      showMessage("認識できないタグです");
-      return;
+    const tag = tags[rawTag];
+
+    if (tag) {
+      processTouch(tag);
     }
-
-    processTouch(tag);
   }
 
   render();
